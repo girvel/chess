@@ -4,24 +4,17 @@
 enum piece {
 	none_piece = 0b0,
 
-	white_pawn   = 0b0010,
-	white_knight = 0b0100,
-	white_bishop = 0b0110,
-	white_rook   = 0b1000,
-	white_queen  = 0b1010,
-	white_king   = 0b1100,
-
-	black_pawn   = 0b0011,
-	black_knight = 0b0101,
-	black_bishop = 0b0111,
-	black_rook   = 0b1001,
-	black_queen  = 0b1011,
-	black_king   = 0b1101,
+	pawn   = 0b0010,
+	knight = 0b0100,
+	bishop = 0b0110,
+	rook   = 0b1000,
+	queen  = 0b1010,
+	king   = 0b1100,
 };
 
 enum piece_color {
-	white_piece = 0,
-	black_piece = 1
+	black = 0,
+	white = 1
 };
 
 int color = 1;
@@ -40,27 +33,27 @@ int parse_field(struct field f) {
 }
 
 void setup_board(enum piece board[64]) {
-	board[0] = white_rook;
-	board[1] = white_knight;
-	board[2] = white_bishop;
-	board[3] = white_queen;
-	board[4] = white_king;
-	board[5] = white_bishop;
-	board[6] = white_knight;
-	board[7] = white_rook;
+	board[0] = white|rook;
+	board[1] = white|knight;
+	board[2] = white|bishop;
+	board[3] = white|queen;
+	board[4] = white|king;
+	board[5] = white|bishop;
+	board[6] = white|knight;
+	board[7] = white|rook;
 
-	board[56] = black_rook;
-	board[57] = black_knight;
-	board[58] = black_bishop;
-	board[59] = black_queen;
-	board[60] = black_king;
-	board[61] = black_bishop;
-	board[62] = black_knight;
-	board[63] = black_rook;
+	board[56] = black|rook;
+	board[57] = black|knight;
+	board[58] = black|bishop;
+	board[59] = black|queen;
+	board[60] = black|king;
+	board[61] = black|bishop;
+	board[62] = black|knight;
+	board[63] = black|rook;
 
 	for (int i = 0; i < 8; i++) {
-		board[8 + i] = white_pawn;
-		board[48 + i] = black_pawn;
+		board[8 + i] = white|pawn;
+		board[48 + i] = black|pawn;
 	}
 }
 
@@ -84,11 +77,17 @@ int is_move_legal(enum piece board[64], struct move m, enum piece_color color) {
 	enum piece captured_piece = board[parse_field(m.to)];
 	if (captured_piece != none_piece && (captured_piece & color) == (moving_piece & color)) return 0;
 
-	if (moving_piece == white_pawn) {
-		if (((m.from.y == 2 && m.to.y == 4) || m.to.y > m.from.y) && m.from.x == m.to.x) return 1;
-		if ((moving_piece & color) != (board[parse_field(m.from)] & color)
-				&& m.to.x - m.from.x == 1 
+	if ((moving_piece & pawn) == pawn) {
+		int direction = (moving_piece & color) * 2 - 1;
+		
+		if ((((m.from.y == 2 || m.from.y == 7) && m.to.y - m.from.y == direction * 2) 
+				|| m.to.y - m.from.y == direction) 
+				&& m.from.x == m.to.x && captured_piece == none_piece) return 1;
+				
+		if (captured_piece != none_piece
+				&& m.to.x - m.from.x == direction
 				&& abs(m.to.y - m.from.y) == 1) return 1;
+				
 		return 0;
 	}
 
@@ -112,6 +111,6 @@ int main() {
 
 	while (1) {
 		scan_move(&m);
-		printf("from: %i\tto: %i\tlegal: %i\n", parse_field(m.from), parse_field(m.to), is_move_legal(board, m, white_piece));
+		printf("from: %i\tto: %i\tlegal: %i\n", parse_field(m.from), parse_field(m.to), is_move_legal(board, m, white));
 	}
 }

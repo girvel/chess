@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <stdint.h>
 
 /*
 
@@ -16,7 +17,7 @@ TO-DO list
 - exporting board state
 - README
 - connect lua
-
+- int -> int8_t
 */
 
 int sign(int x) { return (x > 0) - (x < 0); }
@@ -40,7 +41,7 @@ enum piece_color {
 int color = 1;
 
 struct field {
-	char x;
+	char x; 
 	int y;
 };
 

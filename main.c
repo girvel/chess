@@ -65,30 +65,43 @@ void scan_field(struct field *f) {
 	scanf("%1s%d", &f->x, &f->y);
 }
 
-int is_move_legal(enum piece board[64], struct move m, enum piece_color color) {
+int is_move_legal(enum piece board[64], struct move m, enum piece_color player_color) {
+	// discard moves outside of the board
 	if (parse_field(m.from) < 0 || parse_field(m.to) < 0
 			|| parse_field(m.from) >= 64 || parse_field(m.from) >= 64) {
 		return 0;
 	}
 
+	// discard moves by unexisting piece & by enemy piece
 	enum piece moving_piece = board[parse_field(m.from)];
-	if (moving_piece == none_piece) return 0;
+	if (moving_piece == none_piece || (moving_piece & color) != player_color) return 0;
 
+	// discard moves capturing your own piece
 	enum piece captured_piece = board[parse_field(m.to)];
 	if (captured_piece != none_piece && (captured_piece & color) == (moving_piece & color)) return 0;
 
+	// verify move by a pawn
 	if ((moving_piece & pawn) == pawn) {
 		int direction = (moving_piece & color) * 2 - 1;
-		
+
+		// accept pawn moves in its color's direction one field forward and two field forwards from 2nd or 7th rank
 		if ((((m.from.y == 2 || m.from.y == 7) && m.to.y - m.from.y == direction * 2) 
 				|| m.to.y - m.from.y == direction) 
 				&& m.from.x == m.to.x && captured_piece == none_piece) return 1;
-				
+
+		// accept pawn captures in its color's direction
 		if (captured_piece != none_piece
 				&& m.to.x - m.from.x == direction
 				&& abs(m.to.y - m.from.y) == 1) return 1;
-				
+
+		// discard all other moves
 		return 0;
+	}
+
+	// verify move by a knight
+	if ((moving_piece & knight) == knight) {
+		// accept all moves by generalized mathematic formula
+		return (m.from.x - m.to.x) * (m.from.y - m.to.y) && abs(m.from.x - m.to.x) + abs(m.from.y - m.to.y) == 3;
 	}
 
 	return 0;

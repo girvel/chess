@@ -132,17 +132,24 @@ int is_move_legal(enum piece board[64], struct move m, enum piece_color player_c
 
 	// verify move by a bishop
 	if ((moving_piece & ~color) == bishop) {
-		// discard movement outside of current diagonals
-		if (abs(m.to.x - m.from.x) != abs(m.to.y - m.from.y)) return 0;
-
-		// accept everything else
-		return 1;
+		// accept movement inside of current diagonals
+		return abs(m.to.x - m.from.x) == abs(m.to.y - m.from.y);
 	}
 
 	// verify move by a rook
 	if ((moving_piece & ~color) == rook) {
-		printf("rook!\n");
+		// accept movement while it is horizontal or vertical
 		return m.to.x == m.from.x || m.to.y == m.from.y;
+	}
+
+	// verify move by a queen
+	if ((moving_piece & ~color) == queen) {
+		return abs(m.to.x - m.from.x) == abs(m.to.y - m.from.y) || m.to.x == m.from.x || m.to.y == m.from.y;
+	}
+
+	// verify move by a king
+	if ((moving_piece & ~color) == king) {
+		return abs(m.to.x - m.from.x) <= 1 && abs(m.to.y - m.from.y) <= 1 && dx + dy;
 	}
 
 	return 0;

@@ -1,5 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+
+/*
+
+TO-DO list
+
+- put code into multiple files
+- realize castling
+- realize en passant
+- use real notation for movesrealize 
+
+*/
+
+int sign(int x) { return (x > 0) - (x < 0); }
 
 enum piece {
 	none_piece = 0b0,
@@ -52,8 +66,8 @@ void setup_board(enum piece board[64]) {
 	board[63] = black|rook;
 
 	for (int i = 0; i < 8; i++) {
-		board[8 + i] = white|pawn;
-		board[48 + i] = black|pawn;
+		// board[8 + i] = white|pawn;
+		// board[48 + i] = black|pawn;
 	}
 }
 
@@ -66,6 +80,9 @@ void scan_field(struct field *f) {
 }
 
 int is_move_legal(enum piece board[64], struct move m, enum piece_color player_color) {
+	// discard moves that does nothing
+	if (m.from.x == m.to.x && m.from.y == m.to.y) return 0;
+
 	// discard moves outside of the board
 	if (parse_field(m.from) < 0 || parse_field(m.to) < 0
 			|| parse_field(m.from) >= 64 || parse_field(m.from) >= 64) {
@@ -80,8 +97,23 @@ int is_move_legal(enum piece board[64], struct move m, enum piece_color player_c
 	enum piece captured_piece = board[parse_field(m.to)];
 	if (captured_piece != none_piece && (captured_piece & color) == (moving_piece & color)) return 0;
 
+	// verify move by a knight
+	if ((moving_piece & ~color) == knight) {
+		// accept all moves by generalized mathematic formula
+		return (m.from.x - m.to.x) * (m.from.y - m.to.y) && abs(m.from.x - m.to.x) + abs(m.from.y - m.to.y) == 3;
+	}
+
+	// discard movements through other piece
+	int dx = sign(m.to.x - m.from.x);
+	int dy = sign(m.to.y - m.from.y);
+
+	for (int x = m.from.x + dx, y = m.to.x + dy; x != m.to.x && y != m.to.y; x += dx, y += dy) {
+		struct field f = {x, y};
+		if (board[parse_field(f)] != none_piece) return 0;
+	}
+	
 	// verify move by a pawn
-	if ((moving_piece & pawn) == pawn) {
+	if ((moving_piece & ~color) == pawn) {
 		int direction = (moving_piece & color) * 2 - 1;
 
 		// accept pawn moves in its color's direction one field forward and two field forwards from 2nd or 7th rank
@@ -98,10 +130,19 @@ int is_move_legal(enum piece board[64], struct move m, enum piece_color player_c
 		return 0;
 	}
 
-	// verify move by a knight
-	if ((moving_piece & knight) == knight) {
-		// accept all moves by generalized mathematic formula
-		return (m.from.x - m.to.x) * (m.from.y - m.to.y) && abs(m.from.x - m.to.x) + abs(m.from.y - m.to.y) == 3;
+	// verify move by a bishop
+	if ((moving_piece & ~color) == bishop) {
+		// discard movement outside of current diagonals
+		if (abs(m.to.x - m.from.x) != abs(m.to.y - m.from.y)) return 0;
+
+		// accept everything else
+		return 1;
+	}
+
+	// verify move by a rook
+	if ((moving_piece & ~color) == rook) {
+		printf("rook!\n");
+		return m.to.x == m.from.x || m.to.y == m.from.y;
 	}
 
 	return 0;

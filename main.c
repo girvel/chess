@@ -123,7 +123,7 @@ int is_move_legal(struct chess_game game, struct move m) {
 	int dx = sign(m.to.x - m.from.x);
 	int dy = sign(m.to.y - m.from.y);
 
-	for (int x = m.from.x + dx, y = m.to.x + dy; x != m.to.x && y != m.to.y; x += dx, y += dy) {
+	for (int x = m.from.x + dx, y = m.from.y + dy; x != m.to.x || y != m.to.y; x += dx, y += dy) {
 		struct field f = {x, y};
 		if (game.board[parse_field(f)] != none_piece) return 0;
 	}
@@ -203,7 +203,6 @@ enum move_result make_move(struct chess_game *game, struct move m) {
 	game->board[parse_field(m.from)] = none_piece;
 	game->turn ^= 1;
 
-	printf("game continues (%i)...\n", game->turn);
 	return game_continues;
 }
 
@@ -214,6 +213,7 @@ int main() {
 
 	while (1) {
 		// white to move
+		printf("white to move\n");
 		enum move_result result;
 		do {
 			scan_move(&m);
@@ -229,7 +229,7 @@ int main() {
 		}
 
 		// black to move
-		
+		printf("black to move\n");
 		do {
 			m.from.x = rand() % 8 + 'a';
 			m.from.y = rand() % 8 +  1;

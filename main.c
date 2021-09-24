@@ -156,22 +156,95 @@ int is_move_legal(enum piece board[64], struct move m, enum piece_color player_c
 }
 
 enum move_result {
+	illegal_move,
 	game_continues,
 	white_won,
 	black_won,
 	draw
 };
 
-enum move_result make_move(struct field *a, struct field *b);
+int make_move(enum piece board[64], struct move m, enum piece_color player_color) {
+	if (!is_move_legal(board, m, player_color)) {
+		return illegal_move;
+	}
+
+	enum piece captured_piece = board[parse_field(m.to)];
+	if ((captured_piece & ~color) == king) {
+		if (player_color == white) {
+			return white_won;
+		}
+
+		return black_won;
+	}
+
+	board[parse_field(m.to)] = board[parse_field(m.from)];
+	board[parse_field(m.from)] = none_piece;
+}
 
 int main() {
 	enum piece board[64];
+	int illegal_moves[2];
 	setup_board(board);
 	
 	struct move m;
 
 	while (1) {
+		// white to move
 		scan_move(&m);
-		printf("from: %i\tto: %i\tlegal: %i\n", parse_field(m.from), parse_field(m.to), is_move_legal(board, m, white));
+
+		enum move_result result;
+		for (;;) {
+			result = make_move(board, m, white);
+
+			if (result != illegal_move) break;
+			
+			if (++illegal_moves[white] >= 3) {
+				result = black_won;
+				break;
+			}
+		}
+
+		switch (result) {
+			case white_won:
+				printf("You won!\n");
+				return 0;
+
+			case black_won:
+				printf("You lost!\n");
+				return 1;
+
+			case draw:
+				printf("You drew!\n");
+				return 2;
+
+			default: break;
+		}
+
+		// black to move
+
+		do {
+			m.from.x = rand() % 8 + 'a';
+			m.from.y = rand() % 8 +  1;
+			m.to.x = rand() % 8 + 'a';
+			m.to.y = rand() % 8 +  1;
+		} while (make_move(board, m, black) == illegal_move);
+
+		printf("%c%d-%c%d\n", m.from.x, m.from.y, m.to.x, m.to.y);
+
+		switch (result) {
+			case white_won:
+				printf("You won!\n");
+				return 0;
+
+			case black_won:
+				printf("You lost!\n");
+				return 1;
+
+			case draw:
+				printf("You drew!\n");
+				return 2;
+
+			default: break;
+		}
 	}
 }

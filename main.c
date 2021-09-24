@@ -22,7 +22,7 @@ TO-DO list
 
 int sign(int x) { return (x > 0) - (x < 0); }
 
-enum piece {
+typedef enum {
 	none_piece = 0b0,
 
 	pawn   = 0b0010,
@@ -31,29 +31,29 @@ enum piece {
 	rook   = 0b1000,
 	queen  = 0b1010,
 	king   = 0b1100,
-};
+} piece;
 
-enum piece_color {
+typedef enum {
 	black = 0,
 	white = 1
-};
+} piece_color;
 
 int color = 1;
 
-struct field {
+typedef struct {
 	char x; 
 	int y;
-};
+} field;
 
-struct move {
-	struct field from, to;
-};
+typedef struct {
+	field from, to;
+} move;
 
-int parse_field(struct field f) {
+int parse_field(field f) {
 	return 8 * (f.y - 1) + f.x - 'a';
 }
 
-void setup_board(enum piece board[64]) {
+void setup_board(piece board[64]) {
 	board[0] = white|rook;
 	board[1] = white|knight;
 	board[2] = white|bishop;
@@ -82,21 +82,21 @@ void setup_board(enum piece board[64]) {
 	}
 }
 
-void scan_move(struct move *m) {
+void scan_move(move *m) {
 	scanf("%1s%d-%c%d", &m->from.x, &m->from.y, &m->to.x, &m->to.y);
 }
 
-void scan_field(struct field *f) {
+void scan_field(field *f) {
 	scanf("%1s%d", &f->x, &f->y);
 }
 
-struct chess_game {
-	enum piece board[64];
+typedef struct {
+	piece board[64];
 	int illegal_moves[2];
-	enum piece_color turn;
-};
+	piece_color turn;
+} chess_game;
 
-int is_move_legal(struct chess_game game, struct move m) {
+int is_move_legal(chess_game game, move m) {
 	// discard moves that does nothing
 	if (m.from.x == m.to.x && m.from.y == m.to.y) return 0;
 
@@ -107,11 +107,11 @@ int is_move_legal(struct chess_game game, struct move m) {
 	}
 
 	// discard moves by unexisting piece & by enemy piece
-	enum piece moving_piece = game.board[parse_field(m.from)];
+	piece moving_piece = game.board[parse_field(m.from)];
 	if (moving_piece == none_piece || (moving_piece & color) != game.turn) return 0;
 
 	// discard moves capturing your own piece
-	enum piece captured_piece = game.board[parse_field(m.to)];
+	piece captured_piece = game.board[parse_field(m.to)];
 	if (captured_piece != none_piece && (captured_piece & color) == (moving_piece & color)) return 0;
 
 	// verify move by a knight
@@ -125,7 +125,7 @@ int is_move_legal(struct chess_game game, struct move m) {
 	int dy = sign(m.to.y - m.from.y);
 
 	for (int x = m.from.x + dx, y = m.from.y + dy; x != m.to.x || y != m.to.y; x += dx, y += dy) {
-		struct field f = {x, y};
+	  field f = {x, y};
 		if (game.board[parse_field(f)] != none_piece) return 0;
 	}
 	
@@ -172,26 +172,26 @@ int is_move_legal(struct chess_game game, struct move m) {
 	return 0;
 }
 
-struct chess_game create_game() {
-	struct chess_game result;
+chess_game create_game() {
+	chess_game result;
 	setup_board(result.board);
 	result.turn = white;
 	return result;
 }
 
-enum move_result {
+typedef enum {
 	illegal_move = 0b000,
 	game_continues = 0b010,
 	win = 0b100,
 	draw = 0b110
-};
+} move_result;
 
-enum move_result make_move(struct chess_game *game, struct move m) {
+move_result make_move(chess_game *game, move m) {
 	if (!is_move_legal(*game, m)) {
 		return ++game->illegal_moves[game->turn] >= 3 ? ((~game->turn)|win) : illegal_move;
 	}
 
-	enum piece captured_piece = game->board[parse_field(m.to)];
+	piece captured_piece = game->board[parse_field(m.to)];
 	if ((captured_piece & ~color) == king) {
 		if (game->turn == white) {
 			return white|win;
@@ -208,14 +208,14 @@ enum move_result make_move(struct chess_game *game, struct move m) {
 }
 
 int main() {
-	struct chess_game game = create_game();
+	chess_game game = create_game();
 	
-	struct move m;
+	move m;
 
 	while (1) {
 		// white to move
 		printf("white to move\n");
-		enum move_result result;
+		move_result result;
 		do {
 			scan_move(&m);
 			result = make_move(&game, m);
